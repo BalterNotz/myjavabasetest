@@ -1,4 +1,4 @@
-package net.btnz.pri.java.mytest.collections.map;
+package net.btnz.pri.java.myjavabasetest.collections.map;
 
 import java.util.*;
 

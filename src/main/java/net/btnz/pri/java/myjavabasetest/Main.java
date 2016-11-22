@@ -1,4 +1,4 @@
-package net.btnz.pri.java.mytest;
+package net.btnz.pri.java.myjavabasetest;
 
 import java.util.Vector;
 

@@ -1,4 +1,4 @@
-package net.btnz.pri.java.mytest.exceptionm;
+package net.btnz.pri.java.myjavabasetest.exceptionm;
 
 /**
  * Created by zhangsongwei on 2016/11/21.

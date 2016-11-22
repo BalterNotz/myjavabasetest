@@ -1,4 +1,4 @@
-package net.btnz.pri.java.mytest.searchandsort;
+package net.btnz.pri.java.myjavabasetest.searchandsort;
 
 import java.util.Arrays;
 import java.util.Random;

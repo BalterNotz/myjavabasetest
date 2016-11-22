@@ -1,4 +1,4 @@
-package net.btnz.pri.java.mytest.collections;
+package net.btnz.pri.java.myjavabasetest.collections;
 
 import java.util.ArrayList;
 import java.util.Collection;
