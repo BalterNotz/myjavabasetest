@@ -1,10 +1,8 @@
 package net.btnz.pri.java.myjavabasetest.io;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.util.zip.Adler32;
-import java.util.zip.CheckedOutputStream;
-import java.util.zip.ZipOutputStream;
+import java.io.*;
+import java.util.Enumeration;
+import java.util.zip.*;
 
 /**
  * Created by zhangsongwei on 2016/11/22.
@@ -18,10 +16,44 @@ public class ZipCompress {
             out.setComment("A test of Java Zipping");
             //Can't read the above comment, though
             for(int i = 0; i < args.length; i++) {
-                System.out.println();
+                System.out.println("Writing file " + args[i]);
+                BufferedReader in = new BufferedReader(new FileReader(args[i]));
+                out.putNextEntry(new ZipEntry(args[i]));
+                int c;
+                while((c = in.read()) != -1){
+                    out.write(c);
+                }
+                in.close();
+            }
+            out.close();
+            //Checksum valid only after the file has been closed!
+            System.out.println("Checksum: " + csum.getChecksum().getValue());
+            //Now extract the files:
+            System.out.println("Reading file");
+            FileInputStream fi = new FileInputStream("test.zip");
+            CheckedInputStream csumi = new CheckedInputStream(fi, new Adler32());
+            ZipInputStream in2 = new ZipInputStream(new BufferedInputStream(csumi));
+            ZipEntry ze;
+            System.out.println("Checksum: " + csumi.getChecksum().getValue());
+            while ((ze = in2.getNextEntry()) != null){
+                System.out.println("Reading file " + ze);
+                int x;
+                while((x = in2.read()) != -1){
+                    System.out.println(x);
+                }
+            }
+            in2.close();
+            //Alternative way to open and read
+            //zip files
+            ZipFile zf = new ZipFile("test.zip");
+            Enumeration e = zf.entries();
+            while (e.hasMoreElements()){
+                ZipEntry ze2 = (ZipEntry) e.nextElement();
+                System.out.println("File: " + ze2);
+                //...and extract the data as before
             }
         } catch (Throwable t) {
-
+            t.printStackTrace();
         }
     }
 }
