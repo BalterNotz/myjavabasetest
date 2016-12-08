@@ -7,6 +7,22 @@
     <groupId>net.btnz.pri.java</groupId>
     <artifactId>myjavabasetest</artifactId>
     <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/com.alibaba/fastjson &ndash;&gt;-->
+        <!--<dependency>-->
+            <!--<groupId>com.alibaba</groupId>-->
+            <!--<artifactId>fastjson</artifactId>-->
+            <!--<version>1.2.21</version>-->
+        <!--</dependency>-->
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.ow2.asm/asm &ndash;&gt;-->
+        <!--<dependency>-->
+            <!--<groupId>org.ow2.asm</groupId>-->
+            <!--<artifactId>asm</artifactId>-->
+            <!--<version>6.0_ALPHA</version>-->
+        <!--</dependency>-->
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
