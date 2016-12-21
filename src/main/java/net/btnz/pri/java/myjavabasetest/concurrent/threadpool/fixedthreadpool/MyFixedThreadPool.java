@@ -23,5 +23,6 @@ public class MyFixedThreadPool {
                 }
             });
         }
+        fixedThreadPool.shutdown();
     }
 }

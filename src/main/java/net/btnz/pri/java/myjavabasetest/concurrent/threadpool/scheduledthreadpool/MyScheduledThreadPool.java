@@ -16,6 +16,8 @@ public class MyScheduledThreadPool {
             }
         }, 1, 1, TimeUnit.SECONDS);
 
+        Thread.sleep(5000);
         System.out.println("in main thread finished");
+        scheduledThreadPool.shutdown();
     }
 }

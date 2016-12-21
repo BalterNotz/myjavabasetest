@@ -23,5 +23,6 @@ public class MyCachedThreadPool {
                 }
             });
         }
+        cachedThreadPool.shutdown();
     }
 }

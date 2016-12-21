@@ -23,5 +23,6 @@ public class MySingleThreadPool {
                 }
             });
         }
+        singleThreadPool.shutdown();
     }
 }
