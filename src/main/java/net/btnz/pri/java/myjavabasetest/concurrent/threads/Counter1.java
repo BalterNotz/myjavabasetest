@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
 import java.applet.Applet;
 import java.awt.*;
@@ -9,30 +9,28 @@ import java.awt.event.WindowEvent;
 
 /**
  * Created by zhangsongwei on 2016/12/2.
- * Using the Runnable interface to turn the main class into a thread
+ * A non-responsive user interface
  */
-public class Counter3 extends Applet implements Runnable {
+public class Counter1 extends Applet {
     private int count = 0;
-    private boolean runFlag = true;
-    private Thread selfThread = null;
     private Button onOff = new Button("Toggle");
     private Button start = new Button("Start");
     private TextField t = new TextField(10);
+    private boolean runFlag = true;
 
-    public void init() {
+    public void init(){
         add(t);
-        onOff.addActionListener(new OnOff());
-        add(onOff);
         start.addActionListener(new StartL());
         add(start);
+        onOff.addActionListener(new OnOffL());
+        add(onOff);
     }
 
-    @Override
-    public void run() {
+    public void go(){
         while(true){
             try{
-                selfThread.sleep(100);
-            } catch (InterruptedException e){}
+                Thread.currentThread().sleep(100);
+            } catch (InterruptedException e) {}
             if(runFlag){
                 t.setText(Integer.toString(count++));
             }
@@ -40,24 +38,23 @@ public class Counter3 extends Applet implements Runnable {
     }
 
     class StartL implements ActionListener {
-        public void actionPerformed(ActionEvent e){
-            if(null == selfThread) {
-                selfThread = new Thread(Counter3.this);
-                selfThread.start();
-            }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            go();
         }
     }
 
-    class OnOff implements ActionListener {
-        public void actionPerformed(ActionEvent e){
+    class OnOffL implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
             runFlag = !runFlag;
         }
     }
 
     public static void main(String[] args){
-        Counter3 applet = new Counter3();
-        Frame frame = new Frame("Counter3");
-        frame.addWindowListener(
+        Counter1 applet = new Counter1();
+        Frame aFrame = new Frame("Counter1");
+        aFrame.addWindowListener(
                 new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
@@ -66,10 +63,10 @@ public class Counter3 extends Applet implements Runnable {
                     }
                 }
         );
-        frame.add(applet, BorderLayout.CENTER);
-        frame.setSize(300,200);
+        aFrame.add(applet, BorderLayout.CENTER);
+        aFrame.setSize(300,200);
         applet.init();
         applet.start();
-        frame.setVisible(true);
+        aFrame.setVisible(true);
     }
 }

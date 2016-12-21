@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
 import java.applet.Applet;
 import java.awt.*;
@@ -9,45 +9,40 @@ import java.awt.event.WindowEvent;
 
 /**
  * Created by zhangsongwei on 2016/12/2.
- * A responsive user interface with threads
+ * Counter2i using an inner class for the thread
  */
-class SeparateSubTask extends Thread {
-    private int count = 0;
-    private Counter2 c2;
-    private boolean runFlag = true;
+public class Counter2i extends Applet {
+    private class SeparateSubTask extends Thread {
+        int count = 0;
+        boolean runFlag = true;
 
-    public SeparateSubTask(Counter2 c2) {
-        this.c2 = c2;
-        start();
-    }
+        SeparateSubTask() {
+            start();
+        }
 
-    public void invertFlag() {
-        runFlag = !runFlag;
-    }
-
-    public void run() {
-        while (true) {
-            try {
-                sleep(100);
-            } catch (InterruptedException e) {
-            }
-            if (runFlag) {
-                c2.t.setText(Integer.toString(count++));
+        public void run() {
+            while (true) {
+                try {
+                    sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (runFlag) {
+                    t.setText(Integer.toString(count++));
+                }
             }
         }
     }
-}
 
-public class Counter2 extends Applet {
-    TextField t = new TextField(10);
     private SeparateSubTask sp = null;
+    private TextField t = new TextField(10);
     private Button onOff = new Button("Toggle");
     private Button start = new Button("Start");
 
     public void init() {
+        add(t);
         start.addActionListener(new StartL());
         onOff.addActionListener(new OnOffL());
-        add(t);
         add(start);
         add(onOff);
     }
@@ -55,7 +50,7 @@ public class Counter2 extends Applet {
     class StartL implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if (null == sp) {
-                sp = new SeparateSubTask(Counter2.this);
+                sp = new SeparateSubTask();
             }
         }
     }
@@ -63,14 +58,14 @@ public class Counter2 extends Applet {
     class OnOffL implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if (null != sp) {
-                sp.invertFlag();
+                sp.runFlag = !sp.runFlag;
             }
         }
     }
 
     public static void main(String[] args) {
-        Counter2 applet = new Counter2();
-        Frame frame = new Frame("Counter2");
+        Counter2i applet = new Counter2i();
+        Frame frame = new Frame("Counter2i");
         frame.addWindowListener(
                 new WindowAdapter() {
                     @Override

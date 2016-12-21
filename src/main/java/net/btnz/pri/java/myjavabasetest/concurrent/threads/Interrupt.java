@@ -1,6 +1,5 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
-import javax.swing.plaf.InternalFrameUI;
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.ActionEvent;

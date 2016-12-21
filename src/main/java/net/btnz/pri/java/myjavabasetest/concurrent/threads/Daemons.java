@@ -1,6 +1,5 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
-import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

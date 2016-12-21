@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
 import java.applet.Applet;
 import java.awt.*;
@@ -11,7 +11,7 @@ import java.awt.event.WindowEvent;
  * Created by BalterNotz on 2016/12/3.
  * Problems with resource sharing while threading
  */
-class TwoCounter2 extends Thread {
+class TwoCounter extends Thread {
     private boolean started = false;
     private TextField t1 = new TextField(5);
     private TextField t2 = new TextField(5);
@@ -20,7 +20,7 @@ class TwoCounter2 extends Thread {
     private int count2 = 0;
 
     // Add the display components as a panel to the given container:
-    public TwoCounter2(Container c) {
+    public TwoCounter(Container c) {
         Panel p = new Panel();
         p.add(t1);
         p.add(t2);
@@ -35,7 +35,7 @@ class TwoCounter2 extends Thread {
         started = true;
         super.start();
     }
-    public synchronized void run() {
+    public void run() {
         while (true) {
             t1.setText(Integer.toString(count1++));
             t2.setText(Integer.toString(count2++));
@@ -44,16 +44,16 @@ class TwoCounter2 extends Thread {
             }catch (InterruptedException e){}
         }
     }
-    public synchronized void synchTest() {
-        Sharing2.incrementAccess();
+    public void synchTest() {
+        Sharing1.incrementAccess();
         if(count1 != count2){
             l.setText("Unsynched");
         }
     }
 }
-class Watcher2 extends Thread {
-    private Sharing2 p;
-    public Watcher2(Sharing2 p) {
+class Watcher extends Thread {
+    private Sharing1 p;
+    public Watcher(Sharing1 p) {
         this.p = p;
         start();
     }
@@ -69,8 +69,8 @@ class Watcher2 extends Thread {
     }
 }
 
-public class Sharing2 extends Applet {
-    TwoCounter2[] s;
+public class Sharing1 extends Applet {
+    TwoCounter[] s;
     private static int accessCount = 0;
     private static TextField aCount = new TextField("0", 10);
     public static void incrementAccess() {
@@ -87,9 +87,9 @@ public class Sharing2 extends Applet {
             numCounters = Integer.parseInt(getParameter("size"));
             numObservers = Integer.parseInt(getParameter("observers"));
         }
-        s = new TwoCounter2[numCounters];
+        s = new TwoCounter[numCounters];
         for(int i = 0; i < s.length; i++){
-            s[i] = new TwoCounter2(this);
+            s[i] = new TwoCounter(this);
         }
         Panel p = new Panel();
         start.addActionListener(new StartL());
@@ -110,18 +110,18 @@ public class Sharing2 extends Applet {
     class ObserverL implements ActionListener {
         public void actionPerformed(ActionEvent e){
             for(int i = 0; i < numObservers; i++){
-                new Watcher2(Sharing2.this);
+                new Watcher(Sharing1.this);
             }
         }
     }
     public static void main(String[] args){
-        Sharing2 applet = new Sharing2();
+        Sharing1 applet = new Sharing1();
         // This isn't an applet, so set the flag and
         // produce the parameter values form args:
         applet.isApplet = false;
         applet.numCounters = args.length == 0 ? 5 : Integer.parseInt(args[0]);
         applet.numObservers = args.length < 2 ? 5 : Integer.parseInt(args[1]);
-        Frame aFrame = new Frame("Sharing2");
+        Frame aFrame = new Frame("Sharing1");
         aFrame.addWindowListener(
                 new WindowAdapter() {
                     @Override

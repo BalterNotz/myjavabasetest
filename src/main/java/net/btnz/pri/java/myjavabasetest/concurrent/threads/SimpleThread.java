@@ -1,6 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.threads;
-
-import java.text.SimpleDateFormat;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
 /**
  * Created by zhangsongwei on 2016/12/2.

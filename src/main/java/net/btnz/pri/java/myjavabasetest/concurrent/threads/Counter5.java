@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.threads;
+package net.btnz.pri.java.myjavabasetest.concurrent.threads;
 
 import java.applet.Applet;
 import java.awt.*;
