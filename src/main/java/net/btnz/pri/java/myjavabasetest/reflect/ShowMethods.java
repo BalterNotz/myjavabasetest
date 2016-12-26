@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.rtti;
+package net.btnz.pri.java.myjavabasetest.reflect;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;

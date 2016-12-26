@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.rtti;
+package net.btnz.pri.java.myjavabasetest.reflect;
 
 /**
  * Created by zhangsongwei on 2016/11/29.

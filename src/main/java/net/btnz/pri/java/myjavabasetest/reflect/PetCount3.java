@@ -1,4 +1,4 @@
-package net.btnz.pri.java.myjavabasetest.rtti;
+package net.btnz.pri.java.myjavabasetest.reflect;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
