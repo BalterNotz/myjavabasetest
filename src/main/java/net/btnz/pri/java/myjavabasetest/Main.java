@@ -1,6 +1,5 @@
 package net.btnz.pri.java.myjavabasetest;
 
-import java.awt.*;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
