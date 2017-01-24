@@ -290,4 +290,326 @@ ok~，了解完如何加载配置文件后，下面将采用注解的方式来�
 
 #Spring依赖注入
 
-所谓的依赖注入，其实是当一个bean实例引用到了另外一个bean实例时Spring容器帮助我们创建依赖的bean实例并注入（传递）到另一个bean中
+所谓的依赖注入，其实是当一个bean实例引用到了另外一个bean实例时Spring容器帮助我们创建依赖的bean实例并注入（传递）到另一个bean中，如上述案例中的AccountService依懒AccountDao，Spring容器会在创建AccountService的实现类和AccountDao的实现类后，把AccountDao的实现类注入AccountService实例中，下面分别介绍setter注入和构造函数注入。
+
+##Setter注入
+
+Setter注入顾名思义，被注入的属性需要有set方法，Setter注入支持简单类型和引用类型，Setter注入时在bean实例创建完成后执行的。直接观察前面的案例，对象注入使用<property>的ref属性。
+
+    <!-- 声明accountDao对象交给Spring创建 -->
+    <bean name="accountDao" class="com.zejian.spring.springIoc.doa.impl.AccountDaoImpl"/>
+    <!-- 声明accountService对象，交给Spring创建 -->
+    <bean name="accountService" class="com.zejian.spring.springIoc.service.impl.AccountServiceImpl">
+        <!-- 通过Setter注入accountDao对象，对象注入使用ref -->
+        <property name="accountDao" ref="accountDao"/>
+    </bean>
+
+除了上述的对象注入同时也可以注入简单值和map、set、list、数组，简单值注入使用<property>的value属性：
+
+    public class Account {
+        private String name;
+        private String pwd;
+        private List<String> citys;
+        private Set<String> friends;
+        private Map<Integer, String> books;
+
+        public void setName(String name)｛
+            this.pwd = pwd;
+        }
+        public void setPwd(String pwd) {
+            this.pwd = pwd;
+        }
+        public void setCitys(List<String> citys) {
+            this.citys = citys;
+        }
+        public void setFriends(Set<String> friends) {
+            this.friends = friends;
+        }
+        public void setBooks(Map<Integer, String> books) {
+            this.books = books;
+        }
+    }
+
+注入代码如下：
+
+    <!-- Setter通过property注入属性值，普通类型使用value -->
+    <bean id="account" scope="property" class="com.zejian.spring.springIoc.pojo.Account">
+        <property name="name" value="I am SpringIOC1"/>
+        <property name="pwd" value="123"/>
+        <!-- 注入map -->
+        <property name="books">
+            <map>
+                <entry key="10" value="CoreJava"></entry>
+                <entry key="11" value="JavaWeb"></entry>
+                <entry key="12" value="SSH2"></entry>
+            </map>
+        </property>
+        <!-- 注入set -->
+        <property name="friends">
+            <set>
+                <value>张龙</value>
+                <value>老王</value>
+                <value>王五</value>
+            </set>
+        </property>
+        <!-- 注入list -->
+        <property name="citys">
+            <list>
+                <value>北京</value>
+                <value>上海</value>
+                <value>深圳</value>
+                <value>广州</value>
+            </list>
+        </property>
+    </bean>
+
+##构造函数注入
+
+构造注入也就是通过构造方法注入依赖，构造函数的参数一般情况下就是依懒项，Spring容器会根据bean中指定的构造函数参数来决定调用哪个构造函数，同样看一个案例：
+
+    /**
+     * Created by zejian on 2017/1/15.
+     * Blog: http://blog.csdn.net/javazejian [原文地址，请尊重原创]
+     */
+    public class AccountServiceImpl implement AccountService {
+        /**
+         * 需要注入的对象Dao层对象
+         */
+        private AccountDao accountDao;
+        /**
+         * 构造注入
+         * @param accountDao
+         */
+        public AccountServiceImpl(AccountDao accountDao) {
+            this.accountDao = accountDao;
+        }
+        //...
+    }
+
+XML配置如下：
+
+    <bean name="accountDao" class="com.zejian.spring.springIoc.dao.impl.AccountDaoImpl"/>
+    <!-- 通过构造注入依赖 -->
+    <bean name="accountService" class="com.zejian.spring.springIoc.service.impl.AccountServiceImpl">
+        <!-- 构造方法方式注入accountDao对象 -->
+        <constructor-arg ref="accountDao"/>
+    </bean>
+
+当然跟Setter注入一样，构造注入也可传入简单值类型和集合类型，这个比较简单，不啰嗦。需要注意的是，当一个bean定义中有多个<constructor-arg>标签时，它们的放置顺序并不重要，因为Spring容器会通过传入的依懒参数与类中的构造函数的参数进行比较，尝试找到合适的构造函数。可惜的是，在某些情况下可能会出现问题，如下的User类，带有两个构造函数，参数类型和个数都是一样，只是顺序不同，这在class的定义中是允许的，但对于Spring容器来说却是一种灾难。
+
+    public class User {
+        private String name;
+        private int age;
+        //第一个构造函数
+        public User(String name, int age) {
+            this.name=name;
+            this.age=age;
+        }
+        //第二个构造函数
+        public User(int age, String name) {
+            this.name=name;
+            this.age=age;
+        }
+    }
+
+配置信息：
+
+    <bean id="user" class="com.zejian.spring.springIoc.pojo.User">
+        <constructor-arg type="java.lang.String" value="Jack"/>
+        <constructor-arg type="int" value="26"/>
+    </bean>
+
+当程序运行时，Spring容器会尝试查找适合的User构造函数进而创建User对象，由于<constructor-arg>的注入顺序不重要，从而导致不知该使用两个构造函数中的哪一个，这时User实例将创建失败，Spring容器也将启动失败，Spring容器也将启动失败。幸运的是，Spring早已为我们预测到这种情况，因此只要给Spring容器一点点提示，它便能成功找到适合的构造函数从而创建user实例，在<constructor-arg>标签中存在一个index属性，通过index属性可以告诉Spring容器传递的依赖参数的顺序，下面的配置将会令Spring容器成功找到第一个构造函数并调用创建user实例。
+
+    <bean id="user" class="com.zejian.spring.springIoc.pojo.User">
+        <constructor-arg index="0" value="Jack"/>
+        <constructor-arg index="1" value="26"/>
+    </bean>
+
+在日常的开发中，Setter注入和构造注入经常会混合使用，这并不用感觉到诧异，后面我们还会分析到注解装配，它在开发中将更为常用。
+
+##循环依懒
+
+除了上述的现象，在构造函数注入还有一个无法解决的循环依赖的问题，如下有两个bean，A和B，这两个bean通过构造函数互为依懒，这种情况下Spring容器将无法实例化这两个bean。
+
+    public class A {
+        private B b;
+        public A(B b)｛
+            this.b = b;
+        }
+    }
+
+    public class B {
+        private A a;
+        public B(A a) {
+            this.a = a;
+        }
+    }
+
+    <bean id="a" class="com.zejian.springioc.pojo.A">
+        <constructor-arg ref="b"/>
+    </bean>
+
+    <bean id="b" class="com.zejian.springioc.pojo.B">
+        <constructor-arg ref="a"/>
+    </bean>
+
+这是由于A被创建时，希望B被注入到自身，然而，此时B还没有被创建，而B也依懒于A，这样将导致Spring容器左右为难，无法满足两方需求，最后脑袋奔溃，抛出异常。解决这种困境的方式是使用Setter依懒，但还是会造成一些不必要的困扰，因些，强烈不建议在配置文件中使用循环依懒。
+
+##自动装配与注解注入
+
+###基于XML的自动装配
+
+除了上述手动注入的情况，Spring还非常智能地为我们提供自动向Bean注入依懒的功能，这个过程一般被称为自动装配（Autowiring）。博主认为这是一个非常酷的功能，当注入的bean特别多时，它将极大地节省编写注入程序的时间，因此在开发中，非常常见。Spring的自动装配有三种模式：byType（根据类型）、byName（根据名称）、constructor（根据构造函数）。
+
+在ByType模式中，Spring容器会基于反射查看bean定义的类，然后找到与依懒类型相同的bean注入到另外的bean中，这个过程需要借助Setter注入来完成，因些必须存在set方法，否则注入失败。
+
+    //dao层
+    public class UserDaoImpl implements UserDao {
+        //...
+        @Override
+        public void done() {
+            System.out.println("UserDaoImpl.invoke...");
+        }
+    }
+    //service层
+    public class UserServiceImpl implements UserService {
+        //需要注入的依懒
+        private UserDao userDao;
+        /**
+         * set方法
+         * @param userDao
+         */
+        public void setUserDao(UserDao userDao) {
+            this.userDao = userDao;
+        }
+        @Override
+        public void done() {
+            userDao.done();
+        }
+    }
+
+基于XML的配置如下，通过<bean>的autowire属性启动名称为userService的自动装配功能。
+
+    <bean id="userDao" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- ByType根据类型自动装配userDao -->
+    <bean id="userService" autowire="byType" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+测试代码：
+
+    @Test
+    public void test3() {
+        ApplicationContext applicationContext = new ClassPathXmlApplicationContext("spring/spring-ioc2.xml");
+        UserService userService = (UserService) applicationContext.getBean("userService");
+        userService.done();
+    }
+
+运行截图，显然可以生效的：
+
+![XML配置byType自动注入运行结果](./20170119084509147.png)
+
+事实上byType模式可能存在一种注入失败的情况，由于是基于类型的注入，因此当XML文件中存在多个相同类型名称不同的实例Bean时，Spring容器依懒注入仍然会失败，因为存在多种适合的选项，Spring容器无法知道该注入哪种，此时我们需要为Spring容器提供帮助，指定注入哪个Bean实例。可以通过<bean>标签的autowire-candidate设置为false来过滤那些不需要注入的实例Bean。
+
+    <bean id="userDao" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- autowire-candidate="false" 过滤该类型 -->
+    <bean id="userDao2" autowire-candidate="false" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- byType根据类型自动装配userDao -->
+    <bean id="userService" autowire="byType" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+除了上述的解决方案外，还可采用byName模式的自动装配，此时Spring只会尝试将属性名与bean名称进行匹配，如果找到则注入依懒bean。
+
+    <bean id="userDao" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <bean id="userDao2" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- byName根据名称自动装配，找到userServiceImpl名为userDao属性并注入 -->
+    <bean id="userService" autowire="byName" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+需要了解的是如果Spring容器中没有找到可以注入的实例bean时，将不会向依懒属性值注入任何bean，这时依懒bean的属性可能为null，因此我们需要小心处理这种情况，避免不必要的奔溃。对于constructor模式，在该模式下Spring容器同样会尝试找到那些类型与构造函数相同匹配的bean然后注入。
+
+    public class UserServiceImpl implements UserService {
+        private UserDao userDao;
+        //constructor模式
+        public UserServiceImpl(UserDao userDao) {
+            this.userDao = userDao;
+        }
+        /**
+         * set方法
+         * @param userDao
+         */
+        //public void setUserDao(UserDao userDao) {
+        //    this.userDao = userDao;
+        //}
+        @Override
+        public void done() {
+            userDao.done();
+        }
+    }
+
+基于XML配置：
+
+    <bean id="userDao" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- constructor自动装配userDao -->
+    <bean id="userService" autowire="constructor" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+在实际测试中发现当多个bean实例时，如果含有名称与类中声明一样时仍然能正确找到对应类，如userDao、userDao2同时出现，而userService实现类中存在同名属性userDao，此时无需过滤也能正确注入：
+
+    <bean id="userDao" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <!-- 没有过滤userDao2 -->
+    <bean id="userDao2" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <bean id="userService" autowire="constructor" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+运行结果：
+
+![XML配置constructor自动注入动行结果](./20170119111700741.png)
+
+在只存在userDao2时，仍然能正常注入该类，如下形式
+
+    <!-- 只存在userDao2，仍然能正确注入 -->
+    <bean id="userDao2" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <bean id="userService" autowire="constructor" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+但是当不存在userDao，只存在userDao2和userDao3时就不能注入了此时必须使用autowire-candidate="false"过滤该类型了。
+
+    <!-- 只存在userDao2，userDao3无法成功注入 -->
+    <bean id="userDao2" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <bean id="userDao3" class="com.zejian.spring.springIoc.dao.impl.UserDaoImpl"/>
+    <bean id="userService" autowire="consturctor" class="com.zejian.spring.springIoc.service.impl.UserServiceImpl"/>
+
+因此得出如下结论：在constructor模式下，存在单个实例则优先按类型进行参数匹配（无论名称是否匹配），当存在多个类型相同实例时，按名称优先匹配，如果没有找到对应名称，则注入失败，此时可以使用autowire-candidate="false"过滤来解决。
+
+##基于注解的自动装配（@Autowired & @Resource & @Value）
+
+###基于@Autowired注解的自动装配
+
+通过上述的分析，我们已对自动装配有所熟悉，但是在bean实例过多的情景下，手动设置自动注入属性还是不太完美，好在Spring 2.5中引入了@Autowired注释，它可以对类成员变量、方法及构造函数进行标注，完成自动装配的工作。通过@Autowired的使用标注到成员变量时不需要有set方法，请注意@Autowired默认按类型匹配，先看示例用注解演示前面放userDao实例的三种方式。当然使用注解前必须先注册注解驱动，这样注解才能被正确识别。
+
+    <!-- 使用注解时必须启动注解驱动 -->
+    <context:annotation-config/>
+
+    public class UserServiceImpl implements UserService {
+        //标注成员变量
+        @Autowired
+        private UserDao userDao;
+        //标注构造方法
+        @Autowired
+        public UserServiceImpl(UserDao userDao)｛
+            this.userDao = userDao;
+        }
+        //标注set方法
+        @Autowired
+        public void setUserDao(UserDao userDao) {
+            this.userDao = userDao;
+        }
+
+        @Override
+        public void done() {
+            userDao.done();
+        }
+    }
+
+显然上述代码我们通过三种方式注入userDao实例，XML配置文件只需声明bean的实例即可，在实际开发中，我们只需选择其中一种进行注入操作即可，建议使用成员变量注入，这样可以省略set方法和构造方法，相当简洁。
+
+    public class UserServiceImpl implements UserService {
+        //标注成员变量
+        @Autowired
+        private UserDao userDao;
+    }
