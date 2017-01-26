@@ -1164,3 +1164,51 @@ prototype作用域
             <aop:scoped-proxy />
         </bean>
     </beans>
+
+最后还有一点需要明确的是，如果Web层话用的是SpringMVC处理Web请求，则不需要做任何事情就可以使Request和Session作用域生效。但倘若是用其他Web层框架的实现，务必需要在web.xml中声明如下监听器，以便使Request和Session作用域正常工作：
+
+    <web-app>
+        <listener>
+            <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+        </listener>
+    </web-app>
+
+###GlobalSession作用域
+
+这种作用域类似于Session作用域，相当于全局变量，类似Servlet的Application，适用于portlet的web应用程序，请注意，portlet在这指的是分布式开发，而不是portlet语言开发。
+
+##Bean的延长加载
+
+在某些情况，我们可能希望把bean的创建延迟到使用阶段，以免消耗不必要的内存，Spring也非常自愿地支持延迟bean的初始化。因此可以在配置文件中定义bean的延迟加载，这样Spring容器将会延迟bean的创建直到真正需要时才创建。通常情况下，从一个已创建的bean引用另外一个bean，或者显示查找一个bean时会触发bean的创建即使配置了延迟加载属性，因此如果Spring容器在启动时创建了那些设为延长加载的bean实例，不必惊讶，可能那些延迟初始化的bean可能被注入到一个非延迟创建且作用域为Singleton的bean。在XML文件中使用bean的lazy-init属性可以配置改bean是否延迟加载，如果需要配置整个XML文件的bean都延迟加载则使用default-lazy-init属性，请注意lazy-init属性会覆盖default-lazy-init属性。
+
+    <beans xmlns="http://www.springframework.org/schema/beans"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:context="http://www.springframework.org/schema/context"
+           xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd" default-lazy-init="true">
+        <!-- default-lazy-init="true" XML文件中全部bean延迟加载 -->
+        <!-- lazy-init="false" 表示非延迟加载 -->
+        <bean name="accountDao" lazy-init="false" class="com.zejian.spring.springIoc.dao.impl.AccountDaoImpl"/>
+        <!-- 声明accountService对象，交给Spring创建 -->
+        <bean name="accountService" class="com.zejian.spring.springIoc.service.impl.AccountServiceImpl">
+            <!-- 注入accountDao对象，需要set方法 -->
+            <property name="accountDao" ref="accountDao"/>
+        </bean>
+    </beans>
+
+请务必明确一点，默认情况下Spring容器在启动阶段就会创建bean，这个过程称为预先bean初始化，这样是有好处的，可尽可能是发现配置错误，如配置文件中出现错别字或者某些bean还没有被定义却被注入等。当然如存在大量bean需要初始化，这可能引起Spring容器启动缓慢，一些特定的bean可能只是某些场合需要而没必要在Spring容器启动阶段就创建，这样的bean可能是MyBatis的SessionFactory或者Hibernate SessionFactory等，延迟加载它们会让Spring容器启动更轻松些，从而也减少没必要的内存消耗。
+
+##<context:component-scan/>与<context:annotation-config/>
+
+前面我们使用@Autowired、@Resource、@Value等自动装配注解时用<context:annotation-config/>进行注解驱动注册，从而使注解生效。实际上这样<context:annotation-config/>一条配置，它的作用是向Spring容器注册AutowiredAnnotationBeanPostProcessor、PersistenceAnnotationBeanPostProcessor以及RequiredAnnotationBeanPostProcessor这4个BeanPostProcessor。注册这4个BeanPostProcessor后Spring容器就能够识别相应的注解了，当然它们也是可单独配置的。
+
+假如想使用@Resource、@PostConstruct、@PreDestory等注解就可以单独声明CommonAnnotationBeanPostProcessor如果想使用@PersistenceContext注解，声明PersistenceAnnotationBeanPostProcessor的Bean即可。如果想使用@Required的注解，就必须声明RequiredAnnotationBeanPostProcessor的Bean。
+
+一般来说，这些注解是随处可见的，如果总是需要一条一条配置自然就非常繁琐了，于是Spring容器非常机智地为我们提供<context:annotation-config/>的简化配置方式，自动声明。
+
+对于<context:component-scan/>，前面在使用@Service、@Component、@Controller、@Repository等注解时，需要在XML配置声明包扫描驱动<context:component-scan/>，它的作用是Spring容器在启动时会启动注解驱动去扫描对应包下的bean对象并将创建它们的实例，这样我们就不用一个个地进行bean配置声明了，极大简化了编程代码。请注意，当Spring的XML配置文件出了<context:component-scan/>后，<context:component-config/>就可以退休了，因为<context:component-scan/>包含了<context:component-config/>的功能了。在大部分情况下，都会直接使用<context:component-scan/>进行注解驱动注册和包扫描功能。
+
+##IOC与依赖注入的区别
+
+IOC：控制反转：对象的创建权由Spring管理。
+DI（依赖注入）：在Spring创建对象的过程中，把对象依赖的属性注入到类中。
+它们两就这样，其他什么毛线都没有了。

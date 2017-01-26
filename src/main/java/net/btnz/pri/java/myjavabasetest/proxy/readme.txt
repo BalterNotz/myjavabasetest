@@ -29,7 +29,7 @@ static Object newProxyInstance(ClassLoader loader, Class<?>[]
 这个代理类到JVM的方法区），第二个参数是接口（表明你这个代理类
 需要实现哪些接口），第三个参数是调用处理器类实例（指定代理类
 中具体要干什么）。这个函数是JDK为了程序员方便创建代理对象而封
-装的一个函数，因此你调用newProxyInstance()时真接创建了代理对
+装的一个函数，因此你调用newProxyInstance()时直接创建了代理对
 象（略去了创建代理类的代码）。其实他主要完成了以下几个工作：
 static Object newProxyInstance(ClassLoader loader, Class<?>[]
  interfaces, InvocationHandler handler) {
