@@ -1,7 +1,5 @@
 package net.btnz.pri.java.myjavabasetest.transparams;
 
-import com.sun.org.apache.bcel.internal.generic.IMUL;
-
 /**
  * Created by BalterNotz on 2016/12/1.
  */
