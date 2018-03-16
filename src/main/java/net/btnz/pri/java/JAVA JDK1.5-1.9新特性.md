@@ -1,3 +1,5 @@
+<http://blog.csdn.net/fzy198926/article/details/78134100>
+
 #1.5
 
 1. 线程池
@@ -1352,596 +1354,523 @@ Predicate是一个布尔类型的函数，该函数只有一个输入参数。Pr
     Predicate isEmpty = String::isEmpty;
     Predicate isNotEmpty = isEmpty.negate();
 
-Functions
+####Functions
 
+Function接口接收一个参数，并返回单一的结果。默认方法可以将多个函
+数串在一起（compse, andThen）：
 
-Function接口接收一个参数，并返回单一的结果。默认方法可以将多个函数串在一起（compse, andThen）：
+    Function toInteger = Integer::valueOf;
+    Function backToString = toInteger.andThen(String::valueOf);
+    
+    backToString.apply("123");     // "123"
 
+####Suppliers
 
-Java代码
-Function toInteger = Integer::valueOf;
-Function backToString = toInteger.andThen(String::valueOf);
+Supplier接口产生一个给定类型的结果。与Function不同的是，Supplier
+没有输入参数。
 
-backToString.apply("123");     // "123"
+    Supplier personSupplier = Person::new;
+    personSupplier.get();   // new Person
 
-
-Suppliers
-
-
-Supplier接口产生一个给定类型的结果。与Function不同的是，Supplier没有输入参数。
-
-
-Java代码
-Supplier personSupplier = Person::new;
-personSupplier.get();   // new Person
-
-
-Consumers
-
+####Consumers
 
 Consumer代表了在一个输入参数上需要进行的操作。
 
+    Consumer greeter = (p) -> System.out.println("Hello, " + p.firstName);
+    greeter.accept(new Person("Luke", "Skywalker"));
 
-Java代码
-Consumer greeter = (p) -> System.out.println("Hello, " + p.firstName);
-greeter.accept(new Person("Luke", "Skywalker"));
+####Comparators
 
+Comparator接口在早期的Java版本中非常著名。Java 8 为这个接口添加
+了不同的默认方法。
 
-Comparators
-
-
-Comparator接口在早期的Java版本中非常著名。Java 8 为这个接口添加了不同的默认方法。
-
-
-Java代码
-Comparator comparator = (p1, p2) -> p1.firstName.compareTo(p2.firstName);
-
-Person p1 = new Person("John", "Doe");
-Person p2 = new Person("Alice", "Wonderland");
-
-comparator.compare(p1, p2);             // > 0
-comparator.reversed().compare(p1, p2);  // < 0
+    Comparator comparator = (p1, p2) -> p1.firstName.compareTo(p2.firstName);
+    
+    Person p1 = new Person("John", "Doe");
+    Person p2 = new Person("Alice", "Wonderland");
+    
+    comparator.compare(p1, p2);             // > 0
+    comparator.reversed().compare(p1, p2);  // < 0
 
 
-Optionals
+####Optionals
 
+Optional不是一个函数式接口，而是一个精巧的工具接口，用来防止
+NullPointerEception产生。这个概念在下一节会显得很重要，所以我们
+在这里快速地浏览一下Optional的工作原理。
 
-Optional不是一个函数式接口，而是一个精巧的工具接口，用来防止NullPointerEception产生。这个概念在下一节会显得很重要，所以我们在这里快速地浏览一下Optional的工作原理。
+Optional是一个简单的值容器，这个值可以是null，也可以是non-null。
+考虑到一个方法可能会返回一个non-null的值，也可能返回一个空值。为
+了不直接返回null，我们在Java 8中就返回一个Optional。
 
+    
+    Optional optional = Optional.of("bam");
+    
+    optional.isPresent();           // true
+    optional.get();                 // "bam"
+    optional.orElse("fallback");    // "bam"
+    
+    optional.ifPresent((s) -> System.out.println(s.charAt(0)));     // "b"
 
-Optional是一个简单的值容器，这个值可以是null，也可以是non-null。考虑到一个方法可能会返回一个non-null的值，也可能返回一个空值。为了不直接返回null，我们在Java 8中就返回一个Optional。
+##Streams
 
+java.util.Stream表示了某一种元素的序列，在这些元素上可以进行各种
+操作。Stream操作可以是中间操作，也可以是完结操作。完结操作 会返回
+一个某种类型的值，而中间操作会返回流对象本身，并且你可以通过多次调
+用同一个流操作方法来将操作结果串起来（就像StringBuffer的 append
+方法一样————译者注）。Stream是在一个源的基础上创建出来的，例如
+java.util.Collection中的list或者 set（map不能作为Stream的源）
+。Stream操作往往可以通过顺序或者并行两种方式来执行。
 
-Java代码
-Optional optional = Optional.of("bam");
+我们先了解一下序列流。首先，我们通过string类型的list的形式创建示
+例数据：
 
-optional.isPresent();           // true
-optional.get();                 // "bam"
-optional.orElse("fallback");    // "bam"
+    List stringCollection = new ArrayList<>();
+    stringCollection.add("ddd2");
+    stringCollection.add("aaa2");
+    stringCollection.add("bbb1");
+    stringCollection.add("aaa1");
+    stringCollection.add("bbb3");
+    stringCollection.add("ccc");
+    stringCollection.add("bbb2");
+    stringCollection.add("ddd1");
 
-optional.ifPresent((s) -> System.out.println(s.charAt(0)));     // "b"
+Java 8中的Collections类的功能已经有所增强，你可以之直接通过调用
+Collections.stream()或者Collection.parallelStream()方法来创
+建一个流对象。下面的章节会解释这个最常用的操作。
 
+###Filter
 
+Filter接受一个predicate接口类型的变量，并将所有流对象中的元素进
+行过滤。该操作是一个中间操作，因此它允许我们在返回结果的基 础上再
+进行其他的流操作（forEach）。ForEach接受一个function接口类型的
+变量，用来执行对每一个元素的操作。ForEach是一个 中止操作。它不返
+回流，所以我们不能再调用其他的流操作。
 
-
-
-
-Streams Top
-java.util.Stream表示了某一种元素的序列，在这些元素上可以进行各种操作。Stream操作可以是中间操作，也可以是完结操作。完结操作 会返回一个某种类型的值，而中间操作会返回流对象本身，并且你可以通过多次调用同一个流操作方法来将操作结果串起来（就像StringBuffer的 append方法一样————译者注）。Stream是在一个源的基础上创建出来的，例如java.util.Collection中的list或者 set（map不能作为Stream的源）。Stream操作往往可以通过顺序或者并行两种方式来执行。
-
-
-我们先了解一下序列流。首先，我们通过string类型的list的形式创建示例数据：
-
-
-Java代码
-List stringCollection = new ArrayList<>();
-stringCollection.add("ddd2");
-stringCollection.add("aaa2");
-stringCollection.add("bbb1");
-stringCollection.add("aaa1");
-stringCollection.add("bbb3");
-stringCollection.add("ccc");
-stringCollection.add("bbb2");
-stringCollection.add("ddd1");
-
-
-Java 8中的Collections类的功能已经有所增强，你可以之直接通过调用Collections.stream()或者Collection.parallelStream()方法来创建一个流对象。下面的章节会解释这个最常用的操作。
-
-
-Filter
-
-
-Filter接受一个predicate接口类型的变量，并将所有流对象中的元素进行过滤。该操作是一个中间操作，因此它允许我们在返回结果的基 础上再进行其他的流操作（forEach）。ForEach接受一个function接口类型的变量，用来执行对每一个元素的操作。ForEach是一个 中止操作。它不返回流，所以我们不能再调用其他的流操作。
-
-
-Java代码
-stringCollection
-    .stream()
-    .filter((s) -> s.startsWith("a"))
-    .forEach(System.out::println);
-
-// "aaa2", "aaa1"
-
-
-Sorted
-
-
-Sorted是一个中间操作，能够返回一个排过序的流对象的视图。流对象中的元素会默认按照自然顺序进行排序，除非你自己指定一个Comparator接口来改变排序规则。
-
-
-Java代码
-stringCollection
-    .stream()
-    .sorted()
-    .filter((s) -> s.startsWith("a"))
-    .forEach(System.out::println);
-
-// "aaa1", "aaa2"
-
-
-一定要记住，sorted只是创建一个流对象排序的视图，而不会改变原来集合中元素的顺序。原来string集合中的元素顺序是没有改变的。
-
-
-Java代码
-System.out.println(stringCollection);
-// ddd2, aaa2, bbb1, aaa1, bbb3, ccc, bbb2, ddd1
-
-
-Map
-
-
-map是一个对于流对象的中间操作，通过给定的方法，它能够把流对象中的每一个元素对应到另外一个对象上。下面的例子就演示了如何把每个 string都转换成大写的string. 不但如此，你还可以把每一种对象映射成为其他类型。对于带泛型结果的流对象，具体的类型还要由传递给map的泛型方法来决定。
-
-
-Java代码
-stringCollection
-    .stream()
-    .map(String::toUpperCase)
-    .sorted((a, b) -> b.compareTo(a))
-    .forEach(System.out::println);
-
-// "DDD2", "DDD1", "CCC", "BBB3", "BBB2", "AAA2", "AAA1"
-
-
-Match
-
-
-匹配操作有多种不同的类型，都是用来判断某一种规则是否与流对象相互吻合的。所有的匹配操作都是终结操作，只返回一个boolean类型的结果。
-
-
-Java代码
-boolean anyStartsWithA =
     stringCollection
         .stream()
-        .anyMatch((s) -> s.startsWith("a"));
+        .filter((s) -> s.startsWith("a"))
+        .forEach(System.out::println);
+    
+    // "aaa2", "aaa1"
 
-System.out.println(anyStartsWithA);      // true
+###Sorted
 
-boolean allStartsWithA =
-    stringCollection
-        .stream()
-        .allMatch((s) -> s.startsWith("a"));
+Sorted是一个中间操作，能够返回一个排过序的流对象的视图。流对象中
+的元素会默认按照自然顺序进行排序，除非你自己指定一个Comparator接
+口来改变排序规则。
 
-System.out.println(allStartsWithA);      // false
-
-boolean noneStartsWithZ =
-    stringCollection
-        .stream()
-        .noneMatch((s) -> s.startsWith("z"));
-
-System.out.println(noneStartsWithZ);      // true
-
-
-Count
-
-
-Count是一个终结操作，它的作用是返回一个数值，用来标识当前流对象中包含的元素数量。
-
-
-Java代码
-long startsWithB =
-    stringCollection
-        .stream()
-        .filter((s) -> s.startsWith("b"))
-        .count();
-
-System.out.println(startsWithB);    // 3
-
-
-Reduce
-
-
-该操作是一个终结操作，它能够通过某一个方法，对元素进行削减操作。该操作的结果会放在一个Optional变量里返回。
-
-
-Java代码
-Optional reduced =
     stringCollection
         .stream()
         .sorted()
-        .reduce((s1, s2) -> s1 + "#" + s2);
+        .filter((s) -> s.startsWith("a"))
+        .forEach(System.out::println);
+    
+    // "aaa1", "aaa2"
 
-reduced.ifPresent(System.out::println);
-// "aaa1#aaa2#bbb1#bbb2#bbb3#ccc#ddd1#ddd2"
+一定要记住，sorted只是创建一个流对象排序的视图，而不会改变原来集
+合中元素的顺序。原来string集合中的元素顺序是没有改变的。
 
+    System.out.println(stringCollection);
+    // ddd2, aaa2, bbb1, aaa1, bbb3, ccc, bbb2, ddd1
 
+###Map
 
+map是一个对于流对象的中间操作，通过给定的方法，它能够把流对象中的
+每一个元素对应到另外一个对象上。下面的例子就演示了如何把每个
+string都转换成大写的string. 不但如此，你还可以把每一种对象映射成
+为其他类型。对于带泛型结果的流对象，具体的类型还要由传递给map的泛
+型方法来决定。
 
+    stringCollection
+        .stream()
+        .map(String::toUpperCase)
+        .sorted((a, b) -> b.compareTo(a))
+        .forEach(System.out::println);
+    
+    // "DDD2", "DDD1", "CCC", "BBB3", "BBB2", "AAA2", "AAA1"
 
+###Match
 
-Parallel Streams Top
-像上面所说的，流操作可以是顺序的，也可以是并行的。顺序操作通过单线程执行，而并行操作则通过多线程执行。
+匹配操作有多种不同的类型，都是用来判断某一种规则是否与流对象相互
+吻合的。所有的匹配操作都是终结操作，只返回一个boolean类型的结果。
 
+    boolean anyStartsWithA =
+        stringCollection
+            .stream()
+            .anyMatch((s) -> s.startsWith("a"));
+    
+    System.out.println(anyStartsWithA);      // true
+    
+    boolean allStartsWithA =
+        stringCollection
+            .stream()
+            .allMatch((s) -> s.startsWith("a"));
+    
+    System.out.println(allStartsWithA);      // false
+    
+    boolean noneStartsWithZ =
+        stringCollection
+            .stream()
+            .noneMatch((s) -> s.startsWith("z"));
+    
+    System.out.println(noneStartsWithZ);      // true
+
+###Count
+
+Count是一个终结操作，它的作用是返回一个数值，用来标识当前流对象
+中包含的元素数量。
+
+    long startsWithB =
+        stringCollection
+            .stream()
+            .filter((s) -> s.startsWith("b"))
+            .count();
+    
+    System.out.println(startsWithB);    // 3
+
+###Reduce
+
+该操作是一个终结操作，它能够通过某一个方法，对元素进行削减操作。
+该操作的结果会放在一个Optional变量里返回。
+
+    Optional reduced =
+        stringCollection
+            .stream()
+            .sorted()
+            .reduce((s1, s2) -> s1 + "#" + s2);
+    
+    reduced.ifPresent(System.out::println);
+    // "aaa1#aaa2#bbb1#bbb2#bbb3#ccc#ddd1#ddd2"
+
+##Parallel Streams
+
+像上面所说的，流操作可以是顺序的，也可以是并行的。顺序操作通过单
+线程执行，而并行操作则通过多线程执行。
 
 下面的例子就演示了如何使用并行流进行操作来提高运行效率，代码非常简单。
-
-
 首先我们创建一个大的list，里面的元素都是唯一的：
 
-
-Java代码
-int max = 1000000;
-List values = new ArrayList<>(max);
-for (int i = 0; i < max; i++) {
-    UUID uuid = UUID.randomUUID();
-    values.add(uuid.toString());
-}
-
+    int max = 1000000;
+    List values = new ArrayList<>(max);
+    for (int i = 0; i < max; i++) {
+        UUID uuid = UUID.randomUUID();
+        values.add(uuid.toString());
+    }
 
 现在，我们测量一下对这个集合进行排序所使用的时间。
 
-
 顺序排序
 
-
-Java代码
-long t0 = System.nanoTime();
-
-long count = values.stream().sorted().count();
-System.out.println(count);
-
-long t1 = System.nanoTime();
-
-long millis = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-System.out.println(String.format("sequential sort took: %d ms", millis));
-
-// sequential sort took: 899 ms
+    long t0 = System.nanoTime();
+    
+    long count = values.stream().sorted().count();
+    System.out.println(count);
+    
+    long t1 = System.nanoTime();
+    
+    long millis = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
+    System.out.println(String.format("sequential sort took: %d ms", millis));
+    
+    // sequential sort took: 899 ms
 
 
 并行排序
 
+    long t0 = System.nanoTime();
+    
+    long count = values.parallelStream().sorted().count();
+    System.out.println(count);
+    
+    long t1 = System.nanoTime();
+    
+    long millis = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
+    System.out.println(String.format("parallel sort took: %d ms", millis));
+    
+    // parallel sort took: 472 ms
 
-Java代码
-long t0 = System.nanoTime();
+如你所见，所有的代码段几乎都相同，唯一的不同就是把stream()改成了
+parallelStream(), 结果并行排序快了50%。
 
-long count = values.parallelStream().sorted().count();
-System.out.println(count);
+###SS
+正如前面已经提到的那样，map是不支持流操作的。而更新后的map现在则支
+持多种实用的新方法，来完成常规的任务。
 
-long t1 = System.nanoTime();
+    Map map = new HashMap<>();
+    
+    for (int i = 0; i < 10; i++) {
+        map.putIfAbsent(i, "val" + i);
+    }
+    
+    map.forEach((id, val) -> System.out.println(val));
 
-long millis = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-System.out.println(String.format("parallel sort took: %d ms", millis));
-
-// parallel sort took: 472 ms
-
-
-如你所见，所有的代码段几乎都相同，唯一的不同就是把stream()改成了parallelStream(), 结果并行排序快了50%。
-
-
-
-
-Map Top
-正如前面已经提到的那样，map是不支持流操作的。而更新后的map现在则支持多种实用的新方法，来完成常规的任务。
-
-
-Java代码
-Map map = new HashMap<>();
-
-for (int i = 0; i < 10; i++) {
-    map.putIfAbsent(i, "val" + i);
-}
-
-map.forEach((id, val) -> System.out.println(val));
-
-
-上面的代码风格是完全自解释的：putIfAbsent避免我们将null写入；forEach接受一个消费者对象，从而将操作实施到每一个map中的值上。
-
+上面的代码风格是完全自解释的：putIfAbsent避免我们将null写入；
+forEach接受一个消费者对象，从而将操作实施到每一个map中的值上。
 
 下面的这个例子展示了如何使用函数来计算map的编码：
 
+    map.computeIfPresent(3, (num, val) -> val + num);
+    map.get(3);             // val33
+    
+    map.computeIfPresent(9, (num, val) -> null);
+    map.containsKey(9);     // false
+    
+    map.computeIfAbsent(23, num -> "val" + num);
+    map.containsKey(23);    // true
+    
+    map.computeIfAbsent(3, num -> "bam");
+    map.get(3);             // val33
 
-Java代码
-map.computeIfPresent(3, (num, val) -> val + num);
-map.get(3);             // val33
+接下来，我们将学习，当给定一个key值时，如何把一个实例从对应的key
+中移除：
 
-map.computeIfPresent(9, (num, val) -> null);
-map.containsKey(9);     // false
-
-map.computeIfAbsent(23, num -> "val" + num);
-map.containsKey(23);    // true
-
-map.computeIfAbsent(3, num -> "bam");
-map.get(3);             // val33
-
-
-接下来，我们将学习，当给定一个key值时，如何把一个实例从对应的key中移除：
-
-
-Java代码
-map.remove(3, "val3");
-map.get(3);             // val33
-
-map.remove(3, "val33");
-map.get(3);             // null
-
+    map.remove(3, "val3");
+    map.get(3);             // val33
+    
+    map.remove(3, "val33");
+    map.get(3);             // null
 
 另一个有用的方法：
 
-
-Java代码
-map.getOrDefault(42, "not found");  // not found
-
+    map.getOrDefault(42, "not found");  // not found
 
 将map中的实例合并也是非常容易的：
 
+    map.merge(9, "val9", (value, newValue) -> value.concat(newValue));
+    map.get(9);             // val9
+    
+    map.merge(9, "concat", (value, newValue) -> value.concat(newValue));
+    map.get(9);             // val9concat
 
-Java代码
-map.merge(9, "val9", (value, newValue) -> value.concat(newValue));
-map.get(9);             // val9
-
-map.merge(9, "concat", (value, newValue) -> value.concat(newValue));
-map.get(9);             // val9concat
-
-
-合并操作先看map中是否没有特定的key/value存在，如果是，则把key/value存入map，否则merging函数就会被调用，对现有的数值进行修改。
+合并操作先看map中是否没有特定的key/value存在，如果是，则把
+key/value存入map，否则merging函数就会被调用，对现有的数值进行修改。
 
 
+##时间日期API
+Java 8 包含了全新的时间日期API，这些功能都放在了java.time包下。
+新的时间日期API是基于Joda-Time库开发的，但是也不尽相同。下面的例
+子就涵盖了大多数新的API的重要部分。
 
+###Clock
 
-时间日期API Top
-Java 8 包含了全新的时间日期API，这些功能都放在了java.time包下。新的时间日期API是基于Joda-Time库开发的，但是也不尽相同。下面的例子就涵盖了大多数新的API的重要部分。
+Clock提供了对当前时间和日期的访问功能。Clock是对当前时区敏感的，
+并可用于替代 System.currentTimeMillis()方法来获取当前的毫秒时间。
+当前时间线上的时刻可以用Instance类来表示。Instance 也能够用于创建
+原先的java.util.Date对象。
 
+    Clock clock = Clock.systemDefaultZone();
+    long millis = clock.millis();
+    
+    Instant instant = clock.instant();
+    Date legacyDate = Date.from(instant);   // legacy java.util.Date
 
-Clock
+###Timezones
 
+时区类可以用一个ZoneId来表示。时区类的对象可以通过静态工厂方法方便
+地获取。时区类还定义了一个偏移量，用来在当前时刻或某时间与目标时区
+时间之间进行转换。
 
-Clock提供了对当前时间和日期的访问功能。Clock是对当前时区敏感的，并可用于替代 System.currentTimeMillis()方法来获取当前的毫秒时间。当前时间线上的时刻可以用Instance类来表示。Instance 也能够用于创建原先的java.util.Date对象。
+    System.out.println(ZoneId.getAvailableZoneIds());
+    // prints all available timezone ids
+    
+    ZoneId zone1 = ZoneId.of("Europe/Berlin");
+    ZoneId zone2 = ZoneId.of("Brazil/East");
+    System.out.println(zone1.getRules());
+    System.out.println(zone2.getRules());
+    
+    // ZoneRules[currentStandardOffset=+01:00]
+    // ZoneRules[currentStandardOffset=-03:00]
 
+###LocalTime
 
-Java代码
-Clock clock = Clock.systemDefaultZone();
-long millis = clock.millis();
+本地时间类表示一个没有指定时区的时间，例如，10 p.m.或者17：30:15，
+下面的例子会用上面的例子定义的时区创建两个本地时间对象。然后我们会
+比较两个时间，并计算它们之间的小时和分钟的不同。
 
-Instant instant = clock.instant();
-Date legacyDate = Date.from(instant);   // legacy java.util.Date
+    LocalTime now1 = LocalTime.now(zone1);
+    LocalTime now2 = LocalTime.now(zone2);
+    
+    System.out.println(now1.isBefore(now2));  // false
+    
+    long hoursBetween = ChronoUnit.HOURS.between(now1, now2);
+    long minutesBetween = ChronoUnit.MINUTES.between(now1, now2);
+    
+    System.out.println(hoursBetween);       // -3
+    System.out.println(minutesBetween);     // -239
 
+LocalTime是由多个工厂方法组成，其目的是为了简化对时间对象实例的创
+建和操作，包括对时间字符串进行解析的操作。
 
-Timezones
+    LocalTime late = LocalTime.of(23, 59, 59);
+    System.out.println(late);       // 23:59:59
+    
+    DateTimeFormatter germanFormatter =
+        DateTimeFormatter
+            .ofLocalizedTime(FormatStyle.SHORT)
+            .withLocale(Locale.GERMAN);
+    
+    LocalTime leetTime = LocalTime.parse("13:37", germanFormatter);
+    System.out.println(leetTime);   // 13:37
 
+###LocalDate
 
-时区类可以用一个ZoneId来表示。时区类的对象可以通过静态工厂方法方便地获取。时区类还定义了一个偏移量，用来在当前时刻或某时间与目标时区时间之间进行转换。
+本地时间表示了一个独一无二的时间，例如：2014-03-11。这个时间是不
+可变的，与LocalTime是同源的。下面的例子演示了如何通过加减日，月，
+年等指标来计算新的日期。记住，每一次操作都会返回一个新的时间对象。
 
-
-Java代码
-System.out.println(ZoneId.getAvailableZoneIds());
-// prints all available timezone ids
-
-ZoneId zone1 = ZoneId.of("Europe/Berlin");
-ZoneId zone2 = ZoneId.of("Brazil/East");
-System.out.println(zone1.getRules());
-System.out.println(zone2.getRules());
-
-// ZoneRules[currentStandardOffset=+01:00]
-// ZoneRules[currentStandardOffset=-03:00]
-
-
-LocalTime
-
-
-本地时间类表示一个没有指定时区的时间，例如，10 p.m.或者17：30:15，下面的例子会用上面的例子定义的时区创建两个本地时间对象。然后我们会比较两个时间，并计算它们之间的小时和分钟的不同。
-
-
-Java代码
-LocalTime now1 = LocalTime.now(zone1);
-LocalTime now2 = LocalTime.now(zone2);
-
-System.out.println(now1.isBefore(now2));  // false
-
-long hoursBetween = ChronoUnit.HOURS.between(now1, now2);
-long minutesBetween = ChronoUnit.MINUTES.between(now1, now2);
-
-System.out.println(hoursBetween);       // -3
-System.out.println(minutesBetween);     // -239
-
-
-LocalTime是由多个工厂方法组成，其目的是为了简化对时间对象实例的创建和操作，包括对时间字符串进行解析的操作。
-
-
-Java代码
-LocalTime late = LocalTime.of(23, 59, 59);
-System.out.println(late);       // 23:59:59
-
-DateTimeFormatter germanFormatter =
-    DateTimeFormatter
-        .ofLocalizedTime(FormatStyle.SHORT)
-        .withLocale(Locale.GERMAN);
-
-LocalTime leetTime = LocalTime.parse("13:37", germanFormatter);
-System.out.println(leetTime);   // 13:37
-
-
-LocalDate
-
-
-本地时间表示了一个独一无二的时间，例如：2014-03-11。这个时间是不可变的，与LocalTime是同源的。下面的例子演示了如何通过加减日，月，年等指标来计算新的日期。记住，每一次操作都会返回一个新的时间对象。
-
-
-Java代码
-LocalDate today = LocalDate.now();
-LocalDate tomorrow = today.plus(1, ChronoUnit.DAYS);
-LocalDate yesterday = tomorrow.minusDays(2);
-
-LocalDate independenceDay = LocalDate.of(2014, Month.JULY, 4);
-DayOfWeek dayOfWeek = independenceDay.getDayOfWeek();
-System.out.println(dayOfWeek);    // FRIDAYParsing a LocalDate from a string is just as simple as parsing a LocalTime:
-
+    LocalDate today = LocalDate.now();
+    LocalDate tomorrow = today.plus(1, ChronoUnit.DAYS);
+    LocalDate yesterday = tomorrow.minusDays(2);
+    
+    LocalDate independenceDay = LocalDate.of(2014, Month.JULY, 4);
+    DayOfWeek dayOfWeek = independenceDay.getDayOfWeek();
+    System.out.println(dayOfWeek);    // FRIDAYParsing a LocalDate from a string is just as simple as parsing a LocalTime:
 
 解析字符串并形成LocalDate对象，这个操作和解析LocalTime一样简单。
 
+    DateTimeFormatter germanFormatter =
+        DateTimeFormatter
+            .ofLocalizedDate(FormatStyle.MEDIUM)
+            .withLocale(Locale.GERMAN);
+    
+    LocalDate xmas = LocalDate.parse("24.12.2014", germanFormatter);
+    System.out.println(xmas);   // 2014-12-24
 
-Java代码
-DateTimeFormatter germanFormatter =
-    DateTimeFormatter
-        .ofLocalizedDate(FormatStyle.MEDIUM)
-        .withLocale(Locale.GERMAN);
+###LocalDateTime
 
-LocalDate xmas = LocalDate.parse("24.12.2014", germanFormatter);
-System.out.println(xmas);   // 2014-12-24
+LocalDateTime表示的是日期-时间。它将刚才介绍的日期对象和时间对象
+结合起来，形成了一个对象实例。LocalDateTime是不可变的，与
+LocalTime和LocalDate的工作原理相同。我们可以通过调用方法来获取日
+期时间对象中特定的数据域。
 
+    LocalDateTime sylvester = LocalDateTime.of(2014, Month.DECEMBER, 31, 23, 59, 59);
+    
+    DayOfWeek dayOfWeek = sylvester.getDayOfWeek();
+    System.out.println(dayOfWeek);      // WEDNESDAY
+    
+    Month month = sylvester.getMonth();
+    System.out.println(month);          // DECEMBER
+    
+    long minuteOfDay = sylvester.getLong(ChronoField.MINUTE_OF_DAY);
+    System.out.println(minuteOfDay);    // 1439
 
-LocalDateTime
+如果再加上的时区信息，LocalDateTime能够被转换成Instance实例。
+Instance能够被转换成以前的java.util.Date对象。
 
+    Instant instant = sylvester
+            .atZone(ZoneId.systemDefault())
+            .toInstant();
+    
+    Date legacyDate = Date.from(instant);
+    System.out.println(legacyDate);     // Wed Dec 31 23:59:59 CET 2014
 
-LocalDateTime表示的是日期-时间。它将刚才介绍的日期对象和时间对象结合起来，形成了一个对象实例。LocalDateTime是不可变的，与LocalTime和LocalDate的工作原理相同。我们可以通过调用方法来获取日期时间对象中特定的数据域。
+格式化日期-时间对象就和格式化日期对象或者时间对象一样。除了使用预
+定义的格式以外，我们还可以创建自定义的格式化对象，然后匹配我们自定
+义的格式。
 
+    DateTimeFormatter formatter =
+        DateTimeFormatter
+            .ofPattern("MMM dd, yyyy - HH:mm");
+    
+    LocalDateTime parsed = LocalDateTime.parse("Nov 03, 2014 - 07:13", formatter);
+    String string = formatter.format(parsed);
+    System.out.println(string);     // Nov 03, 2014 - 07:13
 
-Java代码
-LocalDateTime sylvester = LocalDateTime.of(2014, Month.DECEMBER, 31, 23, 59, 59);
+不同于java.text.NumberFormat，新的DateTimeFormatter类是不可变的
+，也是线程安全的。
 
-DayOfWeek dayOfWeek = sylvester.getDayOfWeek();
-System.out.println(dayOfWeek);      // WEDNESDAY
+###Annotations
 
-Month month = sylvester.getMonth();
-System.out.println(month);          // DECEMBER
-
-long minuteOfDay = sylvester.getLong(ChronoField.MINUTE_OF_DAY);
-System.out.println(minuteOfDay);    // 1439
-
-
-如果再加上的时区信息，LocalDateTime能够被转换成Instance实例。Instance能够被转换成以前的java.util.Date对象。
-
-
-Java代码
-Instant instant = sylvester
-        .atZone(ZoneId.systemDefault())
-        .toInstant();
-
-Date legacyDate = Date.from(instant);
-System.out.println(legacyDate);     // Wed Dec 31 23:59:59 CET 2014
-
-
-格式化日期-时间对象就和格式化日期对象或者时间对象一样。除了使用预定义的格式以外，我们还可以创建自定义的格式化对象，然后匹配我们自定义的格式。
-
-
-Java代码
-DateTimeFormatter formatter =
-    DateTimeFormatter
-        .ofPattern("MMM dd, yyyy - HH:mm");
-
-LocalDateTime parsed = LocalDateTime.parse("Nov 03, 2014 - 07:13", formatter);
-String string = formatter.format(parsed);
-System.out.println(string);     // Nov 03, 2014 - 07:13
-
-
-不同于java.text.NumberFormat，新的DateTimeFormatter类是不可变的，也是线程安全的。
-
-
-更多的细节，请看这里
-
-
-
-
-Annotations Top
 Java 8中的注解是可重复的。让我们直接深入看看例子，弄明白它是什么意思。
-
 
 首先，我们定义一个包装注解，它包括了一个实际注解的数组
 
+    @interface Hints {
+        Hint[] value();
+    }
+    
+    @Repeatable(Hints.class)
+    @interface Hint {
+        String value();
+    }
 
-Java代码
-@interface Hints {
-    Hint[] value();
-}
-
-@Repeatable(Hints.class)
-@interface Hint {
-    String value();
-}
-
-
-只要在前面加上注解名：@Repeatable，Java 8 允许我们对同一类型使用多重注解：
-
+只要在前面加上注解名：@Repeatable，Java 8 允许我们对同一类型使用
+多重注解：
 
 变体1：使用注解容器（老方法）：
 
-
-Java代码
-@Hints({@Hint("hint1"), @Hint("hint2")})
-class Person {}
-
+    @Hints({@Hint("hint1"), @Hint("hint2")})
+    class Person {}
 
 变体2：使用可重复注解（新方法）：
 
+    @Hint("hint1")
+    @Hint("hint2")
+    class Person {}
 
-Java代码
-@Hint("hint1")
-@Hint("hint2")
-class Person {}
+使用变体2，Java编译器能够在内部自动对@Hint进行设置。这对于通过反
+射来读取注解信息来说，是非常重要的。
 
+    Hint hint = Person.class.getAnnotation(Hint.class);
+    System.out.println(hint);                   // null
+    
+    Hints hints1 = Person.class.getAnnotation(Hints.class);
+    System.out.println(hints1.value().length);  // 2
+    
+    Hint[] hints2 = Person.class.getAnnotationsByType(Hint.class);
+    System.out.println(hints2.length);          // 2
 
-使用变体2，Java编译器能够在内部自动对@Hint进行设置。这对于通过反射来读取注解信息来说，是非常重要的。
+尽管我们绝对不会在Person类上声明@Hints注解，但是它的信息仍然可以
+通过getAnnotation(Hints.class)来读 取。并且，
+getAnnotationsByType方法会更方便，因为它赋予了所有@Hints注解标
+注的方法直接的访问权限。
 
+    @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE})
+    @interface MyAnnotation {}
 
-Java代码
-Hint hint = Person.class.getAnnotation(Hint.class);
-System.out.println(hint);                   // null
+##总结
+Java 8编程指南就到此告一段落。当然，还有很多内容需要进一步研究和
+说明。这就需要靠读者您来对JDK 8进行探究了，例如：
+Arrays.parallelSort, StampedLock和CompletableFuture等等
+ ———— 我这里只是举几个例子而已。
 
-Hints hints1 = Person.class.getAnnotation(Hints.class);
-System.out.println(hints1.value().length);  // 2
-
-Hint[] hints2 = Person.class.getAnnotationsByType(Hint.class);
-System.out.println(hints2.length);          // 2
-
-
-尽管我们绝对不会在Person类上声明@Hints注解，但是它的信息仍然可以通过getAnnotation(Hints.class)来读 取。并且，getAnnotationsByType方法会更方便，因为它赋予了所有@Hints注解标注的方法直接的访问权限。
-
-
-Java代码
-@Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE})
-@interface MyAnnotation {}
-
-
-
-
-
-
-总结 Top
-Java 8编程指南就到此告一段落。当然，还有很多内容需要进一步研究和说明。这就需要靠读者您来对JDK 8进行探究了，例如：Arrays.parallelSort, StampedLock和CompletableFuture等等 ———— 我这里只是举几个例子而已。
-
-
-我希望这个博文能够对您有所帮助，也希望您阅读愉快。完整的教程源代码放在了GitHub上。您可以尽情地fork，并请通过Twitter告诉我您的反馈。
-
+我希望这个博文能够对您有所帮助，也希望您阅读愉快。完整的教程源代码
+放在了GitHub上。您可以尽情地fork，并请通过Twitter告诉我您的反馈。
 
 原文链接： winterbe 翻译： ImportNew.com - 黄小非
 译文链接： http://www.importnew.com/10360.html
--------------------------------------------------------------------------------------------------------------------
 
 #jav1.9新特性
 [打破java1.9模块封装](https://www.jianshu.com/p/b1fd9b1acc22)
 
-加快OpenJDK的开发速度：继2014年3月份发布了Java 8之后，我们进入下一个两年的发布周期。 Java 9预计在2016年发布，并且已经公布了JEP(JDK改进提议)中的前期列表。同时，我们已经把一些新特性整理到了JSR(Java规范请求)，还有提 出了一些希望包括在新版本中的其他特性。
+加快OpenJDK的开发速度：继2014年3月份发布了Java 8之后，我们进入下
+一个两年的发布周期。 Java 9预计在2016年发布，并且已经公布了JEP
+(JDK改进提议)中的前期列表。同时，我们已经把一些新特性整理到了JSR
+(Java规范请求)，还有提出了一些希望包括在新版本中的其他特性。
 
-这些重要的特性都包括在Jigsaw项目中。显著的性能改善和期待已久的API包括：进程API更新，JSON将成为java.util的一部分，货币处理API对于想处在技术最前沿的你，可从这里获得Java 9的初期版本。
+这些重要的特性都包括在Jigsaw项目中。显著的性能改善和期待已久的API
+包括：进程API更新，JSON将成为java.util的一部分，货币处理API对于
+想处在技术最前沿的你，可从这里获得Java 9的初期版本。
 
 被接受的特性
-1. Jigsaw 项目;模块化源码
-Jigsaw项目是为了模块化Java代码、将JRE分成可相互协作的组件，这也是Java 9 众多特色种的一个。JEP是迈向Jigsaw四步中的第一步，它不会改变JRE和JDK的真实结构。JEP是为了模块化JDK源代码，让编译系统能够模块 编译并在构建时检查模块边界。这个项目原本是随Java 8发布的，但由于推迟，所以将把它加到Java 9.
 
-一旦它完成，它可能允许根据一个项目需求自定义组件从而减少rt.jar的大小。在JDK 7 和JDK 8的rt.jar包中有大约20,000个类，但有很多类在一些特定的环境里面并没有被用到(即使在Java 8的紧凑分布特性中已经包含了一部分解决方法也存在着类冗余)。这么做是为了能让Java能够容易应用到小型计算设备(比如网络设备)中，提高它的安全和 性能，同时也能让开发者更容易构建和维护这些类库。
+1. Jigsaw 项目;模块化源码
+Jigsaw项目是为了模块化Java代码、将JRE分成可相互协作的组件，这也是
+Java 9 众多特色种的一个。JEP是迈向Jigsaw四步中的第一步，它不会改
+变JRE和JDK的真实结构。JEP是为了模块化JDK源代码，让编译系统能够模
+块 编译并在构建时检查模块边界。这个项目原本是随Java 8发布的，但由
+于推迟，所以将把它加到Java 9. 一旦它完成，它可能允许根据一个项目需
+求自定义组件从而减少rt.jar的大小。在JDK 7 和JDK 8的rt.jar包中有
+大约20,000个类，但有很多类在一些特定的环境里面并没有被用到(即使在
+Java 8的紧凑分布特性中已经包含了一部分解决方法也存在着类冗余)。这
+么做是为了能让Java能够容易应用到小型计算设备(比如网络设备)中，提高
+它的安全和 性能，同时也能让开发者更容易构建和维护这些类库。
 
 2. 简化进程API
-截止到目前，Java控制与管理系统进程的能力是有限的。举个例子，现在为了简便获取你程序的进程PID，你要么调用本地程序要么要自己使用一些变通方案。更多的是，每个（系统）平台需要有一个不同实现来确保你能获得正确的结果。
-期望代码能获取Linux PIDS，现在是如下方式：
+截止到目前，Java控制与管理系统进程的能力是有限的。举个例子，现在为
+了简便获取你程序的进程PID，你要么调用本地程序要么要自己使用一些变
+通方案。更多的是，每个（系统）平台需要有一个不同实现来确保你能获得
+正确的结果。期望代码能获取Linux PIDS，现在是如下方式：
 
 
 
@@ -1953,56 +1882,95 @@ Jigsaw项目是为了模块化Java代码、将JRE分成可相互协作的组件�
 
 
 
-这次更新将会扩展Java与操作系统的交互能力：新增一些新的直接明了的方法去处理PIDs，进程名字和状态以及枚举多个JVM和进程以及更多事情。
+这次更新将会扩展Java与操作系统的交互能力：新增一些新的直接明了的方
+法去处理PIDs，进程名字和状态以及枚举多个JVM和进程以及更多事情。
 
 3. 轻量级 JSON API
-目前有多种处理JSON的Java工具，但JSON API 独到之处在于JSON API将作为Java语言的一部分，轻量并且运用Java 8的新特性。它将放在java.util包里一起发布(但在JSR 353里面的JSON是用第三方包或者其他的方法处理的).
+目前有多种处理JSON的Java工具，但JSON API 独到之处在于JSON API将
+作为Java语言的一部分，轻量并且运用Java 8的新特性。它将放在
+java.util包里一起发布(但在JSR 353里面的JSON是用第三方包或者其他
+的方法处理的).
 
 4. 钱和货币的API
-在Java 8引进了日期和时间的API之后, Java 9引入了新的货币API, 用以表示货币, 支持币种之间的转换和各种复杂运算. 关于这个项目的具体情况, 请访问https://github.com/JavaMoney,里面已经给出了使用说明和示例, 以下是几个重要的例子:
-
-
-
+在Java 8引进了日期和时间的API之后, Java 9引入了新的货币API, 用以
+表示货币, 支持币种之间的转换和各种复杂运算. 关于这个项目的具体情况
+, 请访问https://github.com/JavaMoney,里面已经给出了使用说明和
+示例, 以下是几个重要的例子:
 
 
 更多关于 JSR 354的内容
 
 5. 改善锁争用机制
-锁争用是限制许多Java多线程应用性能的瓶颈. 新的机制在改善Java对象监视器的性能方面已经得到了多种基准(benchmark)的验证, 其中包括Volano. 测试中通讯服务器开放了海量的进程来连接客户端, 其中有很多连接都申请同一个资源, 以此模拟重负荷日常应用.
+锁争用是限制许多Java多线程应用性能的瓶颈. 新的机制在改善Java对象
+监视器的性能方面已经得到了多种基准(benchmark)的验证, 其中包括
+Volano. 测试中通讯服务器开放了海量的进程来连接客户端, 其中有很多
+连接都申请同一个资源, 以此模拟重负荷日常应用.
 
-通过诸如此类的压力测试我们可以估算JVM的极限吞吐量(每秒的消息数量). JEP在22种不同的测试中都得到了出色的成绩, 新的机制如果能在Java 9中得到应用的话, 应用程序的性能将会大大提升.
+通过诸如此类的压力测试我们可以估算JVM的极限吞吐量(每秒的消息数量).
+ JEP在22种不同的测试中都得到了出色的成绩, 新的机制如果能在Java 9
+ 中得到应用的话, 应用程序的性能将会大大提升.
+ 
 关于JEP 143的更多内容
 
 6. 代码分段缓存
-Java 9的另一个性能提升来自于JIT(Just-in-time)编译器. 当某段代码被大量重复执行的时候, 虚拟机会把这段代码编译成机器码(native code)并储存在代码缓存里面, 进而通过访问缓存中不同分段的代码来提升编译器的效率.
+Java 9的另一个性能提升来自于JIT(Just-in-time)编译器. 当某段代码
+被大量重复执行的时候, 虚拟机会把这段代码编译成机器码(native code)
+并储存在代码缓存里面, 进而通过访问缓存中不同分段的代码来提升编译器
+的效率.
 
-和原来的单一缓存区域不同的是, 新的代码缓存根据代码自身的生命周期而分为三种:
+和原来的单一缓存区域不同的是, 新的代码缓存根据代码自身的生命周期而
+分为三种:
 永驻代码(JVM 内置 / 非方法代码)
 短期代码(仅在某些条件下适用的配置性(profiled)代码)
 长期代码(非配置性代码)
-缓存分段会在各个方面提升程序的性能, 比如做垃圾回收扫描的时候可以直接跳过非方法代码(永驻代码), 从而提升效率.
+缓存分段会在各个方面提升程序的性能, 比如做垃圾回收扫描的时候可以直
+接跳过非方法代码(永驻代码), 从而提升效率.
 更多关于JEP 197的内容
 
 7. 智能Java编译, 第二阶段
-智能Java编译工具sjavac的第一阶段开始于JEP 139这个项目, 用于在多核处理器上提升JDK的编译速度. 现在这个项目已经进入第二阶段(JEP 199), 目的是改进sjavac并让其成为取代目前JDK编译工具javac的Java默认的通用编译工具.
+智能Java编译工具sjavac的第一阶段开始于JEP 139这个项目, 用于在多
+核处理器上提升JDK的编译速度. 现在这个项目已经进入第二阶段(JEP 199),
+ 目的是改进sjavac并让其成为取代目前JDK编译工具javac的Java默认的通
+ 用编译工具.
 
 其他值得期待的内容:
+
 8. HTTP 2.0客户端
-HTTP 2.0标准虽然还没正式发布, 但是已经进入了最终审查阶段, 预计可以在Java 9发布之前审查完毕. JEP 110将会重新定义并实现一个全新的Java HTTP客户端, 用来取代现在的HttpURLConnection, 同时也会实现HTTP 2.0和网络接口(原文websockets). 它现在还没被JEP正式认可但我们希望在Java 9中包含这一项目的内容.
-官方的HTTP 2.0 RFC(Request for Comments, 官方技术讨论/会议记录等等的一系列文档记录)预订于2015年2月发布, 它是基于Google发布的SPDY(Speedy, 快速的)协议. 基于SPDY协议的网络相对于基于HTTP 1.1协议的网络有11.81%到47.7%之间的显著提速, 现在已经有浏览器实现了这个协议.
+HTTP 2.0标准虽然还没正式发布, 但是已经进入了最终审查阶段, 预计可以
+在Java 9发布之前审查完毕. JEP 110将会重新定义并实现一个全新的Java
+ HTTP客户端, 用来取代现在的HttpURLConnection, 同时也会实现HTTP 
+ 2.0和网络接口(原文websockets). 它现在还没被JEP正式认可但我们希望
+ 在Java 9中包含这一项目的内容.
+官方的HTTP 2.0 RFC(Request for Comments, 官方技术讨论/会议记录
+等等的一系列文档记录)预订于2015年2月发布, 它是基于Google发布的
+SPDY(Speedy, 快速的)协议. 基于SPDY协议的网络相对于基于HTTP 1.1
+协议的网络有11.81%到47.7%之间的显著提速, 现在已经有浏览器实现了这
+个协议.
 
 9. Kulla计划: Java的REPL实现
-这个取名为Kulla的项目最近宣布将于2015年4月整合测试, 虽然已经不太有希望能赶上Java 9的发布, 但如果进度快的话或许刚好能赶上. 现在Java并没有来自官方的REPL(Read-Eval-Print-Loop)方式, 也就是说现在如果你想要跑几行Java代码做一个快速的测试, 你仍然需要把这几行代码封装在项目或者方法里面. 虽然在一些流行的IDE里面有Java REPL工具, 但它们并没有官方支持, 而Kulla项目或许就能成为Java官方发布的REPL解决方案.
+这个取名为Kulla的项目最近宣布将于2015年4月整合测试, 虽然已经不太有
+希望能赶上Java 9的发布, 但如果进度快的话或许刚好能赶上. 现在Java并
+没有来自官方的REPL(Read-Eval-Print-Loop)方式, 也就是说现在如果你
+想要跑几行Java代码做一个快速的测试, 你仍然需要把这几行代码封装在项
+目或者方法里面. 虽然在一些流行的IDE里面有Java REPL工具, 但它们并没
+有官方支持, 而Kulla项目或许就能成为Java官方发布的REPL解决方案.
 更多关于Kulla计划的内容
 
 这些新功能出自何处？
 
 JEP和JSR并不是无中生有，下面就介绍一下Java发展的生态环境：
-小组 - 对特定技术内容, 比如安全、网络、Swing、HotSpot、有共同兴趣的组织和个人。
+小组 - 对特定技术内容, 比如安全、网络、Swing、HotSpot、有共同兴趣
+的组织和个人。
 
-项目 - 编写代码, 文档以及其他工作，至少由一个小组赞助和支持，比如最近的Lambda计划，Jigsaw计划和Sumatra计划。
+项目 - 编写代码, 文档以及其他工作，至少由一个小组赞助和支持，比如最
+近的Lambda计划，Jigsaw计划和Sumatra计划。
 
-JDK改进提案(JEP) - 每当需要有新的尝试的时候, JEP可以在JCP(Java Community Process)之前或者同时提出非正式的规范(specification)，被正是认可的JEP正式写进JDK的发展路线图并分配版本号。
+JDK改进提案(JEP) - 每当需要有新的尝试的时候, JEP可以在JCP
+(Java Community Process)之前或者同时提出非正式的规范
+(specification)，被正是认可的JEP正式写进JDK的发展路线图并分配版
+本号。
 
-Java规范提案(JSR) - 新特性的规范出现在这一个阶段，可以来自于小组 / 项目、JEP、 JCP成员或者Java社区(community)成员的提案，每个Java版本都由相应的JSR支持, Java 9暂时还没有。
+Java规范提案(JSR) - 新特性的规范出现在这一个阶段，可以来自于小组 
+/ 项目、JEP、 JCP成员或者Java社区(community)成员的提案，每个
+Java版本都由相应的JSR支持, Java 9暂时还没有。
 该博文转自：http://huyumin.iteye.com/blog/2154441 
