@@ -9,6 +9,12 @@
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
+        <dependency>
+            <groupId>co.paralleluniverse</groupId>
+            <artifactId>quasar-core</artifactId>
+            <version>0.7.9</version>
+        </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
@@ -103,6 +109,19 @@
                     <source>1.9</source>
                     <target>1.9</target>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <executable>java</executable> <!-- executable指的是要执行什么样的命令 -->
+                    <arguments>
+                        <argument>-javaagent:C:\Users\BalterNotz\.m2\repository\co\paralleluniverse\quasar-core\0.7.9\quasar-core-0.7.9.jar</argument> <!-- 这是一个JVM参数 -->
+                        <!--automatically creates the classpath using all project dependencies,
+                            also adding the project build directory -->
+                    </arguments>
                 </configuration>
             </plugin>
         </plugins>
