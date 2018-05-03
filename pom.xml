@@ -8,6 +8,10 @@
     <artifactId>myjavabasetest</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <co.paralleluniverse:quasar-core:jar>co.paralleluniverse:quasar-core-0.7.9:jar</co.paralleluniverse:quasar-core:jar>
+    </properties>
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/co.paralleluniverse/quasar-core -->
         <dependency>
@@ -112,19 +116,20 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <configuration>
-                    <executable>java</executable> <!-- executable指的是要执行什么样的命令 -->
-                    <arguments>
-                        <argument>-javaagent:C:\Users\BalterNotz\.m2\repository\co\paralleluniverse\quasar-core\0.7.9\quasar-core-0.7.9.jar</argument> <!-- 这是一个JVM参数 -->
-                        <!--automatically creates the classpath using all project dependencies,
-                            also adding the project build directory -->
-                    </arguments>
-                </configuration>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>getClasspathFilenames</id>
+                        <goals>
+                            <goal>properties</goal>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
-
 </project>
